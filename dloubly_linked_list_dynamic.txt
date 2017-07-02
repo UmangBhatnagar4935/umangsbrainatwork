@@ -1,0 +1,169 @@
+#include<conio.h>
+#include<stdio.h>
+#include<stdlib.h>
+
+
+//The struct has been declared having onr interger and two struct type data fields that can hold 
+//...the address of the structure itself.
+struct hop
+{
+	int struct_value;
+	struct hop* struct_address_next;
+	struct hop* struct_address_previous;
+};
+
+//These are the same structure pointers which can hold the address and are brought up for the subsequent
+//...usage in the program below.These are declared as global where they are needed globally.
+int clone_nodes_size = 0;
+struct hop* struct_address_next_header = NULL;
+struct hop* struct_address_previous_header = NULL;
+struct hop* address_keeper_array;
+
+//These are the prototypes of the functions for creating and eradicating the particular node.
+struct hop* struct_node_creator(int);
+struct hop* struct_node_destructor(int, int, struct hop*);
+
+//The main function starts up in here.
+void main()
+{
+	int no_of_nodes = 0;
+	int address_start_point = 0;
+	int node_position = 0;
+	struct hop* address_returned;
+	struct hop* address_returned_final;
+	printf("Enter the number of nodes to be entered\n");
+	scanf_s("%d", &no_of_nodes);
+
+	//The function has been called up in here which retuns some value and is used further on.
+	address_returned = struct_node_creator(no_of_nodes);
+	while (address_returned != NULL)
+	{
+		printf("The struct_data and its corresponding address are as %d : %p : %p\n", address_returned->struct_value, address_returned->struct_address_next, address_returned->struct_address_previous);
+		address_returned = address_returned->struct_address_next;
+	}
+	printf("\nEnter the node position to be destructed\n");
+	scanf_s("%d", &node_position);
+	printf("Enter the node position where you need to start the search from\n");
+	scanf_s("%d", &address_start_point);
+
+	if (node_position>=1 && node_position <=no_of_nodes && node_position!=address_start_point && address_start_point<=no_of_nodes && address_start_point>=1)
+	{
+		//The destructor is called here.
+		address_returned_final = struct_node_destructor(node_position, address_start_point, address_keeper_array);
+		printf("\n..........................................................................\n");
+		printf("The nodes after deletion are left in this fashion\n");
+		while (address_returned_final != NULL)
+		{
+			printf("value..%d\tnext address..%p\tprevious address..%p\n", address_returned_final->struct_value, address_returned_final->struct_address_next, address_returned_final->struct_address_previous);
+			address_returned_final = address_returned_final->struct_address_next;
+		}
+	}
+	else if (node_position==address_start_point)
+	{
+		printf("ERROR!!!...no two values can be entered same\n");
+	}
+	else
+	{
+		printf("ERROR!!!...the values are entered out of valid numeral range!!!\n");
+	}
+	_getch();
+
+	//Thus the main function ends here.
+}
+
+//The function definition for the node creation begins here.
+struct hop* struct_node_creator(int nodes_count_received)
+{
+	//The condition, if the user mistakenly enters the nodes in negative. 
+	if (nodes_count_received>0)
+	{
+		struct hop* nodes_made=NULL;
+		clone_nodes_size = nodes_count_received;
+
+		//Dynamic memory allocation takes up in here and miraculously it morphs into an array.
+		address_keeper_array = (struct hop*)malloc(nodes_count_received * sizeof(struct hop));
+		while (nodes_count_received>0)
+		{
+			//Dynamically nodes are creation starts up in here.
+			nodes_made = (struct hop*)malloc(sizeof(struct hop));
+		    //printf("Enter the struct_data to be entered into the node:%d\n",nodes_count_received);
+			//scanf_s("%d",&(nodes_made->struct_value));
+			nodes_made->struct_value = nodes_count_received;
+			printf("the address made is this %d : %p\n", nodes_count_received, nodes_made);
+			nodes_made->struct_address_next = struct_address_next_header;
+			struct_address_next_header = nodes_made;
+			(*(address_keeper_array + nodes_count_received - 1)).struct_address_next = nodes_made;
+		
+			nodes_count_received--;
+		}
+		printf(".......................................................................\n");
+		while (nodes_count_received<clone_nodes_size)
+		{
+			//This is the logic 
+			(*nodes_made).struct_address_previous = struct_address_previous_header;
+			struct_address_previous_header = (*(address_keeper_array + nodes_count_received)).struct_address_next;
+			nodes_count_received++;
+			nodes_made = nodes_made->struct_address_next;
+		}
+		return(struct_address_next_header);
+	}
+	else
+	{
+		printf("The value entered does not make any sense you piece of shit!!\n");
+		return(NULL);
+	}
+}
+struct hop* struct_node_destructor(int node_position_received, int address_start_point_received, struct hop* linked_list_received)
+{
+	int i = 0, j = 0;
+	struct hop* node_position_address;
+	struct hop* start_point_address;
+	struct hop* temp_address_holder=NULL;
+	node_position_address = (*(linked_list_received + node_position_received - 1)).struct_address_next;
+	start_point_address = (*(linked_list_received + address_start_point_received - 1)).struct_address_next;
+
+	if (node_position_received>address_start_point_received && node_position_received != clone_nodes_size)
+	{
+		while (start_point_address != node_position_address)
+		{
+			temp_address_holder = start_point_address;
+			start_point_address = start_point_address->struct_address_next;
+		}
+		temp_address_holder->struct_address_next = start_point_address->struct_address_next;
+		start_point_address->struct_address_next->struct_address_previous = temp_address_holder;
+		free(node_position_address);
+		node_position_address = NULL;
+	}
+	else if (node_position_received == clone_nodes_size)
+	{
+		start_point_address = (linked_list_received + node_position_received - 1)->struct_address_next->struct_address_next;
+		(linked_list_received + node_position_received - 1)->struct_address_next->struct_address_previous->struct_address_next = start_point_address;
+		free((linked_list_received + node_position_received - 1)->struct_address_next);
+		(linked_list_received + node_position_received - 1)->struct_address_next = NULL;
+		return(struct_address_next_header);
+	}
+
+	else if (node_position_received == 1)
+	{
+	    start_point_address = (linked_list_received + node_position_received - 1)->struct_address_next->struct_address_previous;
+		(linked_list_received + node_position_received - 1)->struct_address_next->struct_address_next->struct_address_previous = start_point_address;
+		free((linked_list_received+node_position_received-1)->struct_address_next);
+		(linked_list_received + node_position_received - 1)->struct_address_next = NULL;
+		return((linked_list_received+1)->struct_address_next);
+	}
+	else
+	{
+		while (start_point_address != node_position_address->struct_address_previous)
+		{
+			temp_address_holder = start_point_address;
+			start_point_address = start_point_address->struct_address_previous;
+		}
+		start_point_address->struct_address_next = temp_address_holder->struct_address_next;
+		temp_address_holder->struct_address_next = start_point_address;
+		free(node_position_address);
+		node_position_address = NULL;
+
+	}
+	//printf("the value of first and second is as %d : %d",temp_address_holder->struct_value,start_point_address->struct_value);
+	return(struct_address_next_header);
+}
